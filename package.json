@@ -1,10 +1,10 @@
 {
-  "name": "hubot-rocketchat-boilerplate",
-  "version": "0.0.0-develop",
-  "description": "An example Hubot demonstrating usage of the Rocket.Chat adaptor.",
+  "name": "hubot-rocketchat-reminder",
+  "version": "1.0.0",
+  "description": "Message scheduler for hubot and rocketchat",
   "main": "bin/hubot",
-  "repository": "git@github.com:RocketChat/hubot-rocketchat-boilerplate.git",
-  "author": "Tim Kinnane <tim.kinnane@rocket.chat>",
+  "repository": "git@github.com:ura14/hubot-rocketchat-reminder.git",
+  "author": "Hiroki Ishiura",
   "license": "MIT",
   "private": false,
   "keywords": [
@@ -13,7 +13,7 @@
     "chatbot",
     "chat"
   ],
-   "engines": {
+  "engines": {
     "node": ">=8.x",
     "npm": ">=5.x"
   },
@@ -25,7 +25,9 @@
   "dependencies": {
     "coffeescript": "^2.2.2",
     "hubot": "3",
-    "hubot-rocketchat": "rocketchat/hubot-rocketchat"
+    "hubot-rocketchat": "rocketchat/hubot-rocketchat",
+    "node-schedule": "~1.0.0",
+    "cron-parser": "~1.0.1"
   },
   "devDependencies": {
     "dotenv": "^5.0.1"
