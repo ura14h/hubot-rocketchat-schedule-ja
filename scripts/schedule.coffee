@@ -273,10 +273,10 @@ scheduleFromBrain = (robot, id, pattern, user, message) ->
   try
     createSchedule robot, id, pattern, user, user.room, message
   catch error
-    robot.send envelope, "#{id}: データベースからスケジュールできませんでした. [#{error.message}]" if config.debug is '1'
+    robot.send envelope, "#{id}: データベースから再スケジュールできませんでした. [#{error.message}]" if config.debug is '1'
     return delete robot.brain.get(STORE_KEY)[id]
 
-  robot.send envelope, "#{id} データベースからスケジュールしました" if config.debug is '1'
+  robot.send envelope, "#{id} データベースから再スケジュールしました" if config.debug is '1'
 
 
 storeScheduleInBrain = (robot, id, job) ->
