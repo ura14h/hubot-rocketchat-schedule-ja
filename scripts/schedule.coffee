@@ -187,6 +187,9 @@ schedule = (robot, msg, room, pattern, message) ->
     if job
       msg.send "#{id}: スケジュールが作成されました"
     else
+      prefix = msg.robot.name + ' '
+      if msg.envelope.user.roomType == 'd'
+        prefix = ''
       msg.send """
         \"#{pattern}\" は無効なパターンです。
         指定できるパターンは次のヘルプで確認できます:
