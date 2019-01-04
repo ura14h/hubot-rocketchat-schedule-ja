@@ -25,6 +25,7 @@
   "dependencies": {
     "coffeescript": "^2.2.2",
     "hubot": "3",
+    "hubot-redis-brain": "^1.0.0",
     "hubot-rocketchat": "rocketchat/hubot-rocketchat",
     "node-schedule": "~1.0.0",
     "cron-parser": "~1.0.1"
