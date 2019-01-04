@@ -80,12 +80,12 @@ module.exports = (robot) ->
     text += """
       > #{prefix}schedule cancel <id> -- スケジュールを取り消す
       > #{prefix}schedule update <id> <メッセージ> -- スケジュールされたメッセージを更新する
-      > #{prefix}schedule list -- 現在のルームで予定されているすべてのメッセージを一覧表示
+      > #{prefix}schedule list -- 現在のルームでスケジュールされているすべてのメッセージを一覧表示
     """
     if config.deny_external_control isnt '1'
       text += "\n"
       text += """
-        > #{prefix}schedule list #<ルーム> -- 指定されたルームで予定されているすべてのメッセージを一覧表示
+        > #{prefix}schedule list #<ルーム> -- 指定されたルームでスケジュールされているすべてのメッセージを一覧表示
         > #{prefix}schedule list all -- すべてのスケジュールされたメッセージを一覧表示
       """
     msg.send text
