@@ -12,12 +12,12 @@
 #   HUBOT_SCHEDULE_LIST_REPLACE_TEXT - set JSON object like '{"@":"[at]"}' to configure text replacement used when listing scheduled messages
 #
 # Commands:
-#   hubot schedule [add|new] "<datetime pattern>" <message> - Schedule a message that runs on a specific date and time
-#   hubot schedule [add|new] "<cron pattern>" <message> - Schedule a message that runs recurrently
-#   hubot schedule [add|new] #<room> "<datetime pattern>" <message> - Schedule a message to a specific room that runs on a specific date and time
-#   hubot schedule [add|new] #<room> "<cron pattern>" <message> - Schedule a message to a specific room that runs recurrently
-#   hubot schedule [cancel|del|delete|remove] <id> - Cancel the schedule
-#   hubot schedule [upd|update] <id> <message> - Update scheduled message
+#   hubot schedule add "<datetime pattern>" <message> - Schedule a message that runs on a specific date and time
+#   hubot schedule add "<cron pattern>" <message> - Schedule a message that runs recurrently
+#   hubot schedule add #<room> "<datetime pattern>" <message> - Schedule a message to a specific room that runs on a specific date and time
+#   hubot schedule add #<room> "<cron pattern>" <message> - Schedule a message to a specific room that runs recurrently
+#   hubot schedule cancel <id> - Cancel the schedule
+#   hubot schedule update <id> <message> - Update scheduled message
 #   hubot schedule list - List all scheduled messages for current room
 #   hubot schedule list #<room> - List all scheduled messages for specified room
 #   hubot schedule list all - List all scheduled messages for any rooms
@@ -65,12 +65,12 @@ module.exports = (robot) ->
     msg.send """
       ボットスケジュールコマンドは次のとおりです:
       > #{prefix}schedule help -- このヘルプ
-      > #{prefix}schedule [add|new] "<日時形式>" <メッセージ> -- 特定の日時に実行されるメッセージをスケジュールする
-      > #{prefix}schedule [add|new] "<クロン形式>" <メッセージ> -- 繰り返し実行されるメッセージをスケジュールする
-      > #{prefix}schedule [add|new] #<ルーム> "<日時形式>" <メッセージ> -- 特定の日時に実行される特定のルームにメッセージをスケジュールする
-      > #{prefix}schedule [add|new] #<ルーム> "<クロン形式>" <メッセージ> -- 繰り返し実行される特定のルームにメッセージをスケジュールする
-      > #{prefix}schedule [cancel|del|delete|remove] <id> -- スケジュールを取り消す
-      > #{prefix}schedule [upd|update] <id> <メッセージ> -- スケジュールされたメッセージを更新する
+      > #{prefix}schedule add "<日時形式>" <メッセージ> -- 特定の日時に実行されるメッセージをスケジュールする
+      > #{prefix}schedule add "<クロン形式>" <メッセージ> -- 繰り返し実行されるメッセージをスケジュールする
+      > #{prefix}schedule add #<ルーム> "<日時形式>" <メッセージ> -- 特定の日時に実行される特定のルームにメッセージをスケジュールする
+      > #{prefix}schedule add #<ルーム> "<クロン形式>" <メッセージ> -- 繰り返し実行される特定のルームにメッセージをスケジュールする
+      > #{prefix}schedule cancel <id> -- スケジュールを取り消す
+      > #{prefix}schedule update <id> <メッセージ> -- スケジュールされたメッセージを更新する
       > #{prefix}schedule list -- 現在のルームで予定されているすべてのメッセージを一覧表示
       > #{prefix}schedule list #<ルーム> -- 指定されたルームで予定されているすべてのメッセージを一覧表示
       > #{prefix}schedule list all -- すべてのスケジュールされたメッセージを一覧表示
@@ -78,7 +78,7 @@ module.exports = (robot) ->
       日時形式の書式パターンは http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.1.15 を参照してください。
     """
 
-  robot.respond /schedule (?:new|add)(?: #(.*))? "(.*?)" ((?:.|\s)*)$/i, (msg) ->
+  robot.respond /schedule add(?: #(.*))? "(.*?)" ((?:.|\s)*)$/i, (msg) ->
     target_room = msg.match[1]
 
     if not is_blank(target_room) and isRestrictedRoom(target_room, robot, msg)
@@ -130,10 +130,10 @@ module.exports = (robot) ->
     else
       msg.send 'メッセージはスケジュールされていません'
 
-  robot.respond /schedule (?:upd|update) (\d+) ((?:.|\s)*)/i, (msg) ->
+  robot.respond /schedule update (\d+) ((?:.|\s)*)/i, (msg) ->
     updateSchedule robot, msg, msg.match[1], msg.match[2]
 
-  robot.respond /schedule (?:del|delete|remove|cancel) (\d+)/i, (msg) ->
+  robot.respond /schedule cancel (\d+)/i, (msg) ->
     cancelSchedule robot, msg, msg.match[1]
 
 
