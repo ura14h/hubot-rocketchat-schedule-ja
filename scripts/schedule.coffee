@@ -67,26 +67,26 @@ module.exports = (robot) ->
       > #{prefix}schedule help -- このヘルプ
       > #{prefix}schedule add "<日時形式>" <メッセージ> -- 特定の日時に実行されるメッセージをスケジュールする
       > #{prefix}schedule add "<クロン形式>" <メッセージ> -- 繰り返し実行されるメッセージをスケジュールする
-
     """
     if config.deny_external_control isnt '1'
+      text += "\n"
       text += """
         > #{prefix}schedule add #<ルーム> "<日時形式>" <メッセージ> -- 特定の日時に実行される特定のルームにメッセージをスケジュールする
         > #{prefix}schedule add #<ルーム> "<クロン形式>" <メッセージ> -- 繰り返し実行される特定のルームにメッセージをスケジュールする
-
       """
+    text += "\n"
     text += """
       > #{prefix}schedule cancel <id> -- スケジュールを取り消す
       > #{prefix}schedule update <id> <メッセージ> -- スケジュールされたメッセージを更新する
       > #{prefix}schedule list -- 現在のルームで予定されているすべてのメッセージを一覧表示
-
     """
     if config.deny_external_control isnt '1'
+      text += "\n"
       text += """
         > #{prefix}schedule list #<ルーム> -- 指定されたルームで予定されているすべてのメッセージを一覧表示
         > #{prefix}schedule list all -- すべてのスケジュールされたメッセージを一覧表示
-
       """
+    text += "\n"
     text += """
       クロン形式の書式パターンは http://crontab.org/ を参照してください。
       日時形式の書式パターンは http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.1.15 を参照してください。
