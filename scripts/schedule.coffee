@@ -335,7 +335,7 @@ class Job
 
   start: (robot) ->
     @job = scheduler.scheduleJob(@pattern, =>
-      sendJob robot, @id, @user, @message, @cb
+      executeJob robot, @id, @user, @message, @cb
     )
 
   cancel: ->
@@ -346,7 +346,7 @@ class Job
     [@pattern, @user, @message]
 
 
-sendJob = (robot, id, user, message, cb) =>
+executeJob = (robot, id, user, message, cb) =>
       robot.adapter.driver.asyncCall 'getRoomIdByNameOrId', user.room
       .then (result) ->
         envelope = user: user, room: user.room
