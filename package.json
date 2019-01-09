@@ -1,9 +1,9 @@
 {
-  "name": "hubot-rocketchat-reminder",
+  "name": "hubot-rocketchat-schedule-ja",
   "version": "1.0.0",
   "description": "Message scheduler for hubot and rocketchat",
   "main": "bin/hubot",
-  "repository": "git@github.com:ura14/hubot-rocketchat-reminder.git",
+  "repository": "https://github.com/ura14h/hubot-rocketchat-schedule-ja.git",
   "author": "Hiroki Ishiura",
   "license": "MIT",
   "private": false,

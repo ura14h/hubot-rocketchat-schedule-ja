@@ -1,12 +1,12 @@
-# hubot-rocketchat-reminder
+# hubot-rocketchat-schedule-ja
 
-hubot-rocketchat-reminder is a message scheduler runs on the hubot for Rocket.Chat.
+hubot-rocketchat-schedule-ja is a message scheduler runs on the hubot for Rocket.Chat.
 
 ## Special thanks
 
 - https://github.com/RocketChat/hubot-rocketchat-boilerplate
 - https://github.com/matsukaz/hubot-schedule (original)
-  - https://github.com/ura14h/hubot-schedule (forked)
+  - https://github.com/ura14h/hubot-schedule (forked, obsolated)
 
 I combined the great packages into a single project.
 
