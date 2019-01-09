@@ -335,10 +335,7 @@ class Job
 
   start: (robot) ->
     @job = scheduler.scheduleJob(@pattern, =>
-      envelope = user: @user, room: @user.room
-      robot.send envelope, @message
-      robot.adapter.receive new TextMessage(@user, @message) unless config.dont_receive is '1'
-      @cb?()
+      sendJob robot, @id, @user, @message, @cb
     )
 
   cancel: ->
@@ -347,3 +344,19 @@ class Job
 
   serialize: ->
     [@pattern, @user, @message]
+
+
+sendJob = (robot, id, user, message, cb) =>
+      robot.adapter.driver.asyncCall 'getRoomIdByNameOrId', user.room
+      .then (result) ->
+        envelope = user: user, room: user.room
+        robot.send envelope, message
+        robot.adapter.receive new TextMessage(user, message) unless config.dont_receive is '1'
+        cb?()
+      .catch (error) ->
+        if error.error == 'error-not-allowed'
+          job = JOBS[id]
+          job.cancel()
+          delete JOBS[id]
+          delete robot.brain.get(STORE_KEY)[id]
+          robot.logger.warning "#{id}: The schedule has been canceled because robot can not access the room."
