@@ -183,7 +183,7 @@ updateSchedule = (robot, msg, id, message) ->
   if !job
     return msg.send "スケジュール #{id} が見つかりません"
   room = getRoom(robot, msg)
-  if job.room != room
+  if job.room.id != room.id
     return msg.send "スケジュール #{id} が見つかりません"
 
   job.message = message
@@ -196,7 +196,7 @@ cancelSchedule = (robot, msg, id) ->
   if !job
     return msg.send "スケジュール #{id} が見つかりません"
   room = getRoom(robot, msg)
-  if job.room != room
+  if job.room.id != room.id
     return msg.send "スケジュール #{id} が見つかりません"
 
   job.cancel()
