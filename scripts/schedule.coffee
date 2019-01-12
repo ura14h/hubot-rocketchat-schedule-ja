@@ -218,12 +218,6 @@ isCronPattern = (pattern) ->
   return !Object.keys(errors).length
 
 
-is_blank = (s) -> !s?.trim()
-
-
-is_empty = (o) -> Object.keys(o).length == 0
-
-
 isOtherRoom = (room, robot, msg) ->
   if room not in [msg.message.user.room, msg.message.user.reply_to]
     return true
