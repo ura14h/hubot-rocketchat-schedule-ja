@@ -5,9 +5,6 @@
 #   "node-schedule" : "~1.0.0",
 #   "cron-parser"   : "~1.0.1"
 #
-# Configuration:
-#   HUBOT_SCHEDULE_DEBUG - set "1" for debug
-#
 # Commands:
 #   hubot schedule add "<datetime pattern>" <message> - Schedule a message that runs on a specific date and time
 #   hubot schedule add "<cron pattern>" <message> - Schedule a message that runs recurrently
@@ -18,10 +15,6 @@
 # Author:
 #   matsukaz <matsukaz@gmail.com>
 #   ura14h <ishiura@ja2.so-net.ne.jp>
-
-# configuration settings
-config =
-  debug: process.env.HUBOT_SCHEDULE_DEBUG
 
 scheduler = require('node-schedule')
 cronParser = require('cron-parser')
@@ -203,21 +196,14 @@ syncSchedules = (robot) ->
 
 
 scheduleFromBrain = (robot, id, pattern, user, room, message) ->
-  envelope = room: room
   try
     createSchedule robot, id, pattern, user, room, message
   catch error
-    robot.send envelope, "#{id}: データベースから再スケジュールできませんでした. [#{error.message}]" if config.debug is '1'
     return delete robot.brain.get(STORE_KEY)[id]
-
-  robot.send envelope, "#{id} データベースから再スケジュールしました" if config.debug is '1'
 
 
 storeScheduleInBrain = (robot, id, job) ->
   robot.brain.get(STORE_KEY)[id] = job.serialize()
-
-  envelope = room: job.room
-  robot.send envelope, "#{id}: スケジュールはデータベースに非同期的に保存されます" if config.debug is '1'
 
 
 difference = (obj1 = {}, obj2 = {}) ->
