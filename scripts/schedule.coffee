@@ -7,18 +7,13 @@
 #
 # Configuration:
 #   HUBOT_SCHEDULE_DEBUG - set "1" for debug
-#   HUBOT_SCHEDULE_DENY_EXTERNAL_CONTROL - set "1" if you want to deny scheduling from other rooms
 #
 # Commands:
 #   hubot schedule add "<datetime pattern>" <message> - Schedule a message that runs on a specific date and time
 #   hubot schedule add "<cron pattern>" <message> - Schedule a message that runs recurrently
-#   hubot schedule add #<room> "<datetime pattern>" <message> - Schedule a message to a specific room that runs on a specific date and time
-#   hubot schedule add #<room> "<cron pattern>" <message> - Schedule a message to a specific room that runs recurrently
 #   hubot schedule cancel <id> - Cancel the schedule
 #   hubot schedule update <id> <message> - Update scheduled message
 #   hubot schedule list - List all scheduled messages for current room
-#   hubot schedule list #<room> - List all scheduled messages for specified room
-#   hubot schedule list all - List all scheduled messages for any rooms
 #
 # Author:
 #   matsukaz <matsukaz@gmail.com>
@@ -27,7 +22,6 @@
 # configuration settings
 config =
   debug: process.env.HUBOT_SCHEDULE_DEBUG
-  deny_external_control: process.env.HUBOT_SCHEDULE_DENY_EXTERNAL_CONTROL
 
 scheduler = require('node-schedule')
 cronParser = require('cron-parser')
@@ -54,25 +48,10 @@ module.exports = (robot) ->
       > #{prefix}schedule help datetime -- 日時形式のヘルプ
       > #{prefix}schedule add "<日時形式>" <メッセージ> -- 特定の日時に実行されるメッセージをスケジュールする
       > #{prefix}schedule add "<クロン形式>" <メッセージ> -- 繰り返し実行されるメッセージをスケジュールする
-    """
-    if config.deny_external_control isnt '1'
-      text += "\n"
-      text += """
-        > #{prefix}schedule add #<ルーム> "<日時形式>" <メッセージ> -- 特定の日時に実行される特定のルームにメッセージをスケジュールする
-        > #{prefix}schedule add #<ルーム> "<クロン形式>" <メッセージ> -- 繰り返し実行される特定のルームにメッセージをスケジュールする
-      """
-    text += "\n"
-    text += """
       > #{prefix}schedule cancel <id> -- スケジュールを取り消す
       > #{prefix}schedule update <id> <メッセージ> -- スケジュールされたメッセージを更新する
       > #{prefix}schedule list -- 現在のルームでスケジュールされているすべてのメッセージを一覧表示
     """
-    if config.deny_external_control isnt '1'
-      text += "\n"
-      text += """
-        > #{prefix}schedule list #<ルーム> -- 指定されたルームでスケジュールされているすべてのメッセージを一覧表示
-        > #{prefix}schedule list all -- すべてのスケジュールされたメッセージを一覧表示
-      """
     msg.send text
 
   robot.respond /schedule help cron$/i, (msg) ->
@@ -103,38 +82,18 @@ module.exports = (robot) ->
     """
 
 
-  robot.respond /schedule add(?: #(.*))? "(.*?)" ((?:.|\s)*)$/i, (msg) ->
-    target_room = msg.match[1]
-
-    if not is_blank(target_room) and isRestrictedRoom(target_room, robot, msg)
-      return msg.send "他のルームのスケジュール作成は制限されています"
-    schedule robot, msg, target_room, msg.match[2], msg.match[3]
+  robot.respond /schedule add "(.*?)" ((?:.|\s)*)$/i, (msg) ->
+    schedule robot, msg, null, msg.match[1], msg.match[2]
 
 
-  robot.respond /schedule list(?: (all|#.*))?/i, (msg) ->
-    target_room = msg.match[1]
-    room_id = msg.message.user.room
-    room_name = getRoomName(robot, msg.message.user)
-    if is_blank(target_room) or config.deny_external_control is '1'
-      # if target_room is undefined or blank, show schedule for current room
-      # room is ignored when HUBOT_SCHEDULE_DENY_EXTERNAL_CONTROL is set to 1
-      rooms = [room_name, msg.message.user.reply_to]
-    else if target_room == "all"
-      show_all = true
-    else
-      rooms = [target_room[1..]]
+  robot.respond /schedule list/i, (msg) ->
+    rooms = [room_name, msg.message.user.reply_to]
 
     # split jobs into date and cron pattern jobs
     dateJobs = {}
     cronJobs = {}
     for id, job of JOBS
-
-      # backward compatibility
-      # hubot-schedule under v0.5.1 holds it's job by room_id instead of room_name
-      if job.user.room == room_id
-        job.user.room = room_name
-
-      if show_all or job.user.room in rooms
+      if job.user.room in rooms
         if job.pattern instanceof Date
           dateJobs[id] = job
         else
@@ -144,10 +103,9 @@ module.exports = (robot) ->
     text = ''
     for id in (Object.keys(dateJobs).sort (a, b) -> new Date(dateJobs[a].pattern) - new Date(dateJobs[b].pattern))
       job = dateJobs[id]
-      text += "#{id}: [ #{formatDate(new Date(job.pattern))} ] \##{job.user.room} #{job.message} \n"
-
+      text += "#{id}: [ #{formatDate(new Date(job.pattern))} ] #{job.message} \n"
     for id, job of cronJobs
-      text += "#{id}: [ #{job.pattern} ] \##{job.user.room} #{job.message} \n"
+      text += "#{id}: [ #{job.pattern} ] #{job.message} \n"
 
     if !!text.length
       msg.send text
@@ -207,7 +165,7 @@ createDatetimeSchedule = (robot, id, pattern, user, room, message) ->
 
 startSchedule = (robot, id, pattern, user, room, message, cb) ->
   if !room
-    room = getRoomName(robot, user)
+    room = user.room
   job = new Job(id, pattern, user, room, message, cb)
   job.start(robot)
   JOBS[id] = job
@@ -216,11 +174,8 @@ startSchedule = (robot, id, pattern, user, room, message, cb) ->
 
 updateSchedule = (robot, msg, id, message) ->
   job = JOBS[id]
-  return msg.send "スケジュール #{id} は見つかりません" if !job
-
-  if isRestrictedRoom(job.user.room, robot, msg)
-    return msg.send "他のルームのスケジュール更新は制限されています"
-
+  if !job || isOtherRoom(job.user.room, robot, msg)
+    return msg.send "スケジュール #{id} は見つかりません"
   job.message = message
   robot.brain.get(STORE_KEY)[id] = job.serialize()
   msg.send "#{id}: スケジュールされたメッセージを更新しました"
@@ -228,11 +183,8 @@ updateSchedule = (robot, msg, id, message) ->
 
 cancelSchedule = (robot, msg, id) ->
   job = JOBS[id]
-  return msg.send "#{id}: スケジュールが見つかりません" if !job
-
-  if isRestrictedRoom(job.user.room, robot, msg)
-    return msg.send "他のルームのスケジュール取り消しは制限されています"
-
+  if !job || isOtherRoom(job.user.room, robot, msg)
+    return msg.send "スケジュール #{id} は見つかりません"
   job.cancel()
   delete JOBS[id]
   delete robot.brain.get(STORE_KEY)[id]
@@ -288,10 +240,9 @@ is_blank = (s) -> !s?.trim()
 is_empty = (o) -> Object.keys(o).length == 0
 
 
-isRestrictedRoom = (target_room, robot, msg) ->
-  if config.deny_external_control is '1'
-    if target_room not in [getRoomName(robot, msg.message.user), msg.message.user.reply_to]
-      return true
+isOtherRoom = (room, robot, msg) ->
+  if room not in [msg.message.user.room, msg.message.user.reply_to]
+    return true
   return false
 
 
@@ -306,15 +257,6 @@ formatDate = (date) ->
     offset = -offset
     sign = ' GMT-'
   [date.getFullYear(), toTwoDigits(date.getMonth()+1), toTwoDigits(date.getDate())].join('-') + ' ' + date.toLocaleTimeString() + sign + toTwoDigits(offset / 60) + ':' + toTwoDigits(offset % 60);
-
-
-getRoomName = (robot, user) ->
-  try
-    # Slack adapter needs to convert from room identifier
-    # https://slackapi.github.io/hubot-slack/upgrading
-    return robot.adapter.client.rtm.dataStore.getChannelGroupOrDMById(user.room).name
-  catch e
-    return user.room
 
 
 class Job
