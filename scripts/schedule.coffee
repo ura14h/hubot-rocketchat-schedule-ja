@@ -32,7 +32,7 @@ module.exports = (robot) ->
     robot.brain.set(STORE_KEY, {})
 
   robot.respond /schedule `(.*?)` ((?:.|\s)*)$/i, (msg) ->
-    schedule robot, msg, null, msg.match[1], msg.match[2]
+    schedule robot, msg, msg.match[1], msg.match[2]
 
   robot.respond /schedule cancel (\d+)/i, (msg) ->
     cancelSchedule robot, msg, msg.match[1]
@@ -93,13 +93,15 @@ module.exports = (robot) ->
     """
 
 
-schedule = (robot, msg, room, pattern, message) ->
+schedule = (robot, msg, pattern, message) ->
   if JOB_MAX_COUNT <= Object.keys(JOBS).length
     return msg.send 'スケジュールされたメッセージが多すぎます'
 
   id = Math.floor(Math.random() * JOB_MAX_COUNT) while !id? || JOBS[id]
+  user = msg.message.user
+  room = user.room
   try
-    job = createSchedule robot, id, pattern, msg.message.user, room, message
+    job = createSchedule robot, id, pattern, user, room, message
     if job
       msg.send "スケジュール #{id} が作成されました"
     else
@@ -130,8 +132,6 @@ createDatetimeSchedule = (robot, id, pattern, user, room, message) ->
 
 
 startSchedule = (robot, id, pattern, user, room, message, cb) ->
-  if !room
-    room = user.room
   job = new Job(id, pattern, user, room, message, cb)
   job.start(robot)
   JOBS[id] = job
