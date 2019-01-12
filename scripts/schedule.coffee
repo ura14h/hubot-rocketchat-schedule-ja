@@ -6,11 +6,12 @@
 #   "cron-parser"   : "~1.0.1"
 #
 # Commands:
-#   hubot schedule `<datetime pattern>` <message> - Schedule a message that runs on a specific date and time
 #   hubot schedule `<cron pattern>` <message> - Schedule a message that runs recurrently
+#   hubot schedule `<datetime pattern>` <message> - Schedule a message that runs on a specific date and time
 #   hubot schedule cancel <id> - Cancel the schedule
 #   hubot schedule update <id> <message> - Update scheduled message
 #   hubot schedule list - List all scheduled messages for current room
+#   hubot schedule statistics - Show statistics about scheduled messages
 #
 # Author:
 #   matsukaz <matsukaz@gmail.com>
@@ -32,6 +33,12 @@ module.exports = (robot) ->
 
   robot.respond /schedule `(.*?)` ((?:.|\s)*)$/i, (msg) ->
     schedule robot, msg, null, msg.match[1], msg.match[2]
+
+  robot.respond /schedule cancel (\d+)/i, (msg) ->
+    cancelSchedule robot, msg, msg.match[1]
+
+  robot.respond /schedule update (\d+) ((?:.|\s)*)/i, (msg) ->
+    updateSchedule robot, msg, msg.match[1], msg.match[2]
 
   robot.respond /schedule list/i, (msg) ->
     # split jobs into date and cron pattern jobs
@@ -61,11 +68,29 @@ module.exports = (robot) ->
     else
       msg.send 'スケジュールされたメッセージはありません'
 
-  robot.respond /schedule update (\d+) ((?:.|\s)*)/i, (msg) ->
-    updateSchedule robot, msg, msg.match[1], msg.match[2]
+  robot.respond /schedule statistics/i, (msg) ->
+    all = 0
+    datetime = 0
+    cron = 0
+    rooms = {}
+    for id, job of JOBS
+      all++
+      if job.pattern instanceof Date
+        datetime++
+      else
+        cron++
+      if !rooms[job.room]
+        rooms[job.room] = 0
+      rooms[job.room]++
+    roomCount = Object.keys(rooms).length
 
-  robot.respond /schedule cancel (\d+)/i, (msg) ->
-    cancelSchedule robot, msg, msg.match[1]
+    msg.send """
+      スケジュールされたメッセージの統計です:
+      > メッセージの合計: #{all} 件
+      > - クロンパターン指定 #{cron} 件
+      > - 日時パターン指定 #{datetime} 件
+      > ルームの合計: #{roomCount} 個
+    """
 
 
 schedule = (robot, msg, room, pattern, message) ->
