@@ -9,7 +9,6 @@
 #   HUBOT_SCHEDULE_DEBUG - set "1" for debug
 #   HUBOT_SCHEDULE_DONT_RECEIVE - set "1" if you don't want hubot to be processed by scheduled message
 #   HUBOT_SCHEDULE_DENY_EXTERNAL_CONTROL - set "1" if you want to deny scheduling from other rooms
-#   HUBOT_SCHEDULE_LIST_REPLACE_TEXT - set JSON object like '{"@":"[at]"}' to configure text replacement used when listing scheduled messages
 #
 # Commands:
 #   hubot schedule add "<datetime pattern>" <message> - Schedule a message that runs on a specific date and time
@@ -31,8 +30,6 @@ config =
   debug: process.env.HUBOT_SCHEDULE_DEBUG
   dont_receive: process.env.HUBOT_SCHEDULE_DONT_RECEIVE
   deny_external_control: process.env.HUBOT_SCHEDULE_DENY_EXTERNAL_CONTROL
-  list:
-    replace_text: JSON.parse(process.env.HUBOT_SCHEDULE_LIST_REPLACE_TEXT ? '{"@":"[@]"}')
 
 scheduler = require('node-schedule')
 cronParser = require('cron-parser')
@@ -155,7 +152,6 @@ module.exports = (robot) ->
       text += "#{id}: [ #{job.pattern} ] \##{job.user.room} #{job.message} \n"
 
     if !!text.length
-      text = text.replace(///#{org_text}///g, replaced_text) for org_text, replaced_text of config.list.replace_text
       msg.send text
     else
       msg.send 'メッセージはスケジュールされていません'
