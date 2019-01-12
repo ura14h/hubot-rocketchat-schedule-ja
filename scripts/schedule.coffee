@@ -7,7 +7,6 @@
 #
 # Configuration:
 #   HUBOT_SCHEDULE_DEBUG - set "1" for debug
-#   HUBOT_SCHEDULE_DONT_RECEIVE - set "1" if you don't want hubot to be processed by scheduled message
 #   HUBOT_SCHEDULE_DENY_EXTERNAL_CONTROL - set "1" if you want to deny scheduling from other rooms
 #
 # Commands:
@@ -28,7 +27,6 @@
 # configuration settings
 config =
   debug: process.env.HUBOT_SCHEDULE_DEBUG
-  dont_receive: process.env.HUBOT_SCHEDULE_DONT_RECEIVE
   deny_external_control: process.env.HUBOT_SCHEDULE_DENY_EXTERNAL_CONTROL
 
 scheduler = require('node-schedule')
@@ -347,7 +345,6 @@ executeJob = (robot, id, user, message, cb) =>
       .then (result) ->
         envelope = user: user, room: user.room
         robot.send envelope, message
-        robot.adapter.receive new TextMessage(user, message) unless config.dont_receive is '1'
         cb?()
       .catch (error) ->
         if error.error == 'error-not-allowed'
