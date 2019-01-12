@@ -46,7 +46,7 @@ module.exports = (robot) ->
     dateJobs = {}
     cronJobs = {}
     for id, job of JOBS
-      if job.room == room
+      if job.room.id == room.id
         if job.pattern instanceof Date
           dateJobs[id] = job
         else
@@ -56,9 +56,9 @@ module.exports = (robot) ->
     text = ''
     for id in (Object.keys(dateJobs).sort (a, b) -> new Date(dateJobs[a].pattern) - new Date(dateJobs[b].pattern))
       job = dateJobs[id]
-      text += "> #{id} `#{formatDate(new Date(job.pattern))}` #{job.message} \n"
+      text += "> #{id} - `#{formatDate(new Date(job.pattern))}` #{job.message} \n"
     for id, job of cronJobs
-      text += "> #{id} `#{job.pattern}` #{job.message} \n"
+      text += "> #{id} - `#{job.pattern}` #{job.message} \n"
 
     if !!text.length
       count = Object.keys(dateJobs).length + Object.keys(cronJobs).length
@@ -70,27 +70,47 @@ module.exports = (robot) ->
       msg.send 'スケジュールされたメッセージはありません'
 
   robot.respond /schedule statistics/i, (msg) ->
-    all = 0
-    datetime = 0
-    cron = 0
-    rooms = {}
+    messageAllCount = 0
+    messageDatetimeCount = 0
+    messageCronCount = 0
+    publicRooms = {}
+    privateGroups = {}
+    directMessages = {}
+    otherRooms = {}
     for id, job of JOBS
-      all++
+      messageAllCount++
       if job.pattern instanceof Date
-        datetime++
+        messageDatetimeCount++
       else
-        cron++
-      if !rooms[job.room]
-        rooms[job.room] = 0
-      rooms[job.room]++
-    roomCount = Object.keys(rooms).length
+        messageCronCount++
+      switch job.room.type
+        when 'c'
+          if !publicRooms[job.room.id]
+            publicRooms[job.room.id] = job.room
+        when 'p'
+          if !privateGroups[job.room.id]
+            privateGroups[job.room.id] = job.room
+        when 'd'
+          if !directMessages[job.room.id]
+            directMessages[job.room.id] = job.room
+        else
+          if !otherRooms[job.room.id]
+            otherRooms[job.room.id] = job.room
+    publicRoomCount = Object.keys(publicRooms).length || 0
+    privateGroupCount = Object.keys(privateGroups).length || 0
+    directMessageCount = Object.keys(directMessages).length || 0
+    otherRoomCount = Object.keys(otherRooms).length || 0
+    roomCount = publicRoomCount + privateGroupCount + directMessageCount + otherRoomCount
 
     msg.send """
-      スケジュールされたメッセージの統計です:
-      > メッセージの合計: #{all} 件
-      > - クロンパターン指定 #{cron} 件
-      > - 日時パターン指定 #{datetime} 件
-      > ルームの合計: #{roomCount} 個
+      システム全体のスケジュールの統計です:
+      > スケジュールの合計: #{messageAllCount} 件
+      > - クロンパターン指定 #{messageCronCount} 件
+      > - 日時パターン指定 #{messageDatetimeCount} 件
+      > ルームの合計: #{roomCount} 件
+      > - チャンネル向け #{publicRoomCount} 件
+      > - プライベートグループ向け #{privateGroupCount} 件
+      > - ダイレクトメッセージ向け #{directMessageCount} 件
     """
 
 
