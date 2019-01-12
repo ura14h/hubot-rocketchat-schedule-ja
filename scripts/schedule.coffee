@@ -28,7 +28,7 @@ cronParser = require('cron-parser')
 {TextMessage} = require('hubot')
 JOBS = {}
 JOB_MAX_COUNT = 10000
-STORE_KEY = 'hubot_schedule'
+STORE_KEY = 'hubot_rochetchat_schedule'
 
 module.exports = (robot) ->
   robot.brain.on 'loaded', =>
@@ -91,7 +91,7 @@ module.exports = (robot) ->
     dateJobs = {}
     cronJobs = {}
     for id, job of JOBS
-      if !isOtherRoom(job.user.room, robot, msg)
+      if !isOtherRoom(job.room, robot, msg)
         if job.pattern instanceof Date
           dateJobs[id] = job
         else
@@ -172,7 +172,7 @@ startSchedule = (robot, id, pattern, user, room, message, cb) ->
 
 updateSchedule = (robot, msg, id, message) ->
   job = JOBS[id]
-  if !job || isOtherRoom(job.user.room, robot, msg)
+  if !job || isOtherRoom(job.room, robot, msg)
     return msg.send "スケジュール #{id} は見つかりません"
   job.message = message
   robot.brain.get(STORE_KEY)[id] = job.serialize()
@@ -181,7 +181,7 @@ updateSchedule = (robot, msg, id, message) ->
 
 cancelSchedule = (robot, msg, id) ->
   job = JOBS[id]
-  if !job || isOtherRoom(job.user.room, robot, msg)
+  if !job || isOtherRoom(job.room, robot, msg)
     return msg.send "スケジュール #{id} は見つかりません"
   job.cancel()
   delete JOBS[id]
@@ -202,10 +202,10 @@ syncSchedules = (robot) ->
     storeScheduleInBrain robot, id, job
 
 
-scheduleFromBrain = (robot, id, pattern, user, message) ->
-  envelope = user: user, room: user.room
+scheduleFromBrain = (robot, id, pattern, user, room, message) ->
+  envelope = room: room
   try
-    createSchedule robot, id, pattern, user, user.room, message
+    createSchedule robot, id, pattern, user, room, message
   catch error
     robot.send envelope, "#{id}: データベースから再スケジュールできませんでした. [#{error.message}]" if config.debug is '1'
     return delete robot.brain.get(STORE_KEY)[id]
@@ -216,7 +216,7 @@ scheduleFromBrain = (robot, id, pattern, user, message) ->
 storeScheduleInBrain = (robot, id, job) ->
   robot.brain.get(STORE_KEY)[id] = job.serialize()
 
-  envelope = user: job.user, room: job.user.room
+  envelope = room: job.room
   robot.send envelope, "#{id}: スケジュールはデータベースに非同期的に保存されます" if config.debug is '1'
 
 
@@ -261,15 +261,15 @@ class Job
   constructor: (id, pattern, user, room, message, cb) ->
     @id = id
     @pattern = pattern
-    @user = { room: (room || user.room) }
-    @user[k] = v for k,v of user when k in ['id','team_id','name'] # copy only needed properties
+    @user = user
+    @room = room
     @message = message
     @cb = cb
     @job
 
   start: (robot) ->
     @job = scheduler.scheduleJob(@pattern, =>
-      executeJob robot, @id, @user, @message, @cb
+      executeJob robot, @id, @user, @room, @message, @cb
     )
 
   cancel: ->
@@ -277,13 +277,13 @@ class Job
     @cb?()
 
   serialize: ->
-    [@pattern, @user, @message]
+    [@pattern, @user, @room, @message]
 
 
-executeJob = (robot, id, user, message, cb) =>
-      robot.adapter.driver.asyncCall 'getRoomIdByNameOrId', user.room
+executeJob = (robot, id, user, room, message, cb) =>
+      robot.adapter.driver.asyncCall 'getRoomIdByNameOrId', room
       .then (result) ->
-        envelope = user: user, room: user.room
+        envelope = room: room
         robot.send envelope, message
         cb?()
       .catch (error) ->
