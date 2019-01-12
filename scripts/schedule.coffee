@@ -12,6 +12,7 @@
 #   hubot schedule update <id> <message> - Update the message of schedule  specified by <id>.
 #   hubot schedule list - List all schedules for the current room.
 #   hubot schedule statistics - Show statistics about scheduled messages.
+#   hubot schedule example - Show command examples.
 #
 # Author:
 #   matsukaz <matsukaz@gmail.com>
@@ -34,13 +35,13 @@ module.exports = (robot) ->
   robot.respond /schedule `(.*?)` ((?:.|\s)*)$/i, (msg) ->
     schedule robot, msg, msg.match[1], msg.match[2]
 
-  robot.respond /schedule cancel (\d+)/i, (msg) ->
+  robot.respond /schedule cancel (\d+)$/i, (msg) ->
     cancelSchedule robot, msg, msg.match[1]
 
-  robot.respond /schedule update (\d+) ((?:.|\s)*)/i, (msg) ->
+  robot.respond /schedule update (\d+) ((?:.|\s)*)$/i, (msg) ->
     updateSchedule robot, msg, msg.match[1], msg.match[2]
 
-  robot.respond /schedule list/i, (msg) ->
+  robot.respond /schedule list$/i, (msg) ->
     # split jobs into date and cron pattern jobs
     room = getRoom(robot, msg)
     dateJobs = {}
@@ -69,7 +70,7 @@ module.exports = (robot) ->
     else
       msg.send 'スケジュールされたメッセージはありません'
 
-  robot.respond /schedule statistics/i, (msg) ->
+  robot.respond /schedule statistics$/i, (msg) ->
     messageAllCount = 0
     messageDatetimeCount = 0
     messageCronCount = 0
@@ -111,6 +112,24 @@ module.exports = (robot) ->
       > - チャンネル向け #{publicRoomCount} 件
       > - プライベートグループ向け #{privateGroupCount} 件
       > - ダイレクトメッセージ向け #{directMessageCount} 件
+    """
+
+  robot.respond /schedule example$/i, (msg) ->
+    command = robot.name + ' schedule'
+    room = getRoom(robot, msg)
+    if room.type == 'd'
+      command = 'schedule'
+    
+    msg.send """
+      メッセージをスケジュールするコマンドの例です:
+      ```
+      #{command} `2019-01-01 01:00` 2019年1月1日の午前1時に、このメッセージをつぶやきます
+      #{command} `0 9 * * *` 毎日の9時0分に、このメッセージをつぶやきます
+      #{command} `30 17 * * 4` 毎週木曜日の17時30分に、このメッセージをつぶやきます
+      #{command} `0 9 1 * *` 毎月1日の9時0分に、このメッセージをつぶやきます
+      #{command} `0 10,15 * * *` 毎日の10時0分と15時0分に、このメッセージをつぶやきます
+      #{command} `30 20 * * 1-5` 月曜日から金曜日までの20時30分に、このメッセージをつぶやきます
+      ```
     """
 
 
