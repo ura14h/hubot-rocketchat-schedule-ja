@@ -279,17 +279,16 @@ class Job
   serialize: ->
     [@pattern, @user, @room, @message]
 
-
-executeJob = (robot, id, user, room, message, cb) =>
-      robot.adapter.driver.asyncCall 'getRoomIdByNameOrId', room
-      .then (result) ->
-        envelope = room: room
-        robot.send envelope, message
-        cb?()
-      .catch (error) ->
-        if error.error == 'error-not-allowed'
-          job = JOBS[id]
-          job.cancel()
-          delete JOBS[id]
-          delete robot.brain.get(STORE_KEY)[id]
-          robot.logger.warning "#{id}: The schedule has been canceled because robot can not access the room."
+executeJob =  (robot, id, user, room, message, cb) ->
+  robot.adapter.driver.asyncCall 'getRoomIdByNameOrId', room
+  .then (result) ->
+    envelope = room: room
+    robot.send envelope, message
+    cb?()
+  .catch (error) ->
+    if error.error == 'error-not-allowed'
+      job = JOBS[id]
+      job.cancel()
+      delete JOBS[id]
+      delete robot.brain.get(STORE_KEY)[id]
+      robot.logger.warning "#{id}: The schedule has been canceled because robot can not access the room."
