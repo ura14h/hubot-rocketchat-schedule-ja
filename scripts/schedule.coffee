@@ -6,8 +6,8 @@
 #   "cron-parser"   : "~1.0.1"
 #
 # Commands:
-#   hubot schedule add "<datetime pattern>" <message> - Schedule a message that runs on a specific date and time
-#   hubot schedule add "<cron pattern>" <message> - Schedule a message that runs recurrently
+#   hubot schedule `<datetime pattern>` <message> - Schedule a message that runs on a specific date and time
+#   hubot schedule `<cron pattern>` <message> - Schedule a message that runs recurrently
 #   hubot schedule cancel <id> - Cancel the schedule
 #   hubot schedule update <id> <message> - Update scheduled message
 #   hubot schedule list - List all scheduled messages for current room
@@ -30,7 +30,7 @@ module.exports = (robot) ->
   if !robot.brain.get(STORE_KEY)
     robot.brain.set(STORE_KEY, {})
 
-  robot.respond /schedule add "(.*?)" ((?:.|\s)*)$/i, (msg) ->
+  robot.respond /schedule `(.*?)` ((?:.|\s)*)$/i, (msg) ->
     schedule robot, msg, null, msg.match[1], msg.match[2]
 
   robot.respond /schedule list/i, (msg) ->
@@ -48,14 +48,18 @@ module.exports = (robot) ->
     text = ''
     for id in (Object.keys(dateJobs).sort (a, b) -> new Date(dateJobs[a].pattern) - new Date(dateJobs[b].pattern))
       job = dateJobs[id]
-      text += "#{id}: [ #{formatDate(new Date(job.pattern))} ] #{job.message} \n"
+      text += "> #{id} `#{formatDate(new Date(job.pattern))}` #{job.message} \n"
     for id, job of cronJobs
-      text += "#{id}: [ #{job.pattern} ] #{job.message} \n"
+      text += "> #{id} `#{job.pattern}` #{job.message} \n"
 
     if !!text.length
-      msg.send text
+      count = Object.keys(dateJobs).length + Object.keys(cronJobs).length
+      msg.send """
+        スケジュールされたメッセージが #{count} 件あります:
+        #{text}
+      """
     else
-      msg.send 'メッセージはスケジュールされていません'
+      msg.send 'スケジュールされたメッセージはありません'
 
   robot.respond /schedule update (\d+) ((?:.|\s)*)/i, (msg) ->
     updateSchedule robot, msg, msg.match[1], msg.match[2]
@@ -66,13 +70,13 @@ module.exports = (robot) ->
 
 schedule = (robot, msg, room, pattern, message) ->
   if JOB_MAX_COUNT <= Object.keys(JOBS).length
-    return msg.send "スケジュールされたメッセージが多すぎます"
+    return msg.send 'スケジュールされたメッセージが多すぎます'
 
   id = Math.floor(Math.random() * JOB_MAX_COUNT) while !id? || JOBS[id]
   try
     job = createSchedule robot, id, pattern, msg.message.user, room, message
     if job
-      msg.send "#{id}: スケジュールが作成されました"
+      msg.send "スケジュール #{id} が作成されました"
     else
       msg.send "\"#{pattern}\" は無効なパターンです。"
   catch error
@@ -86,7 +90,7 @@ createSchedule = (robot, id, pattern, user, room, message) ->
   date = Date.parse(pattern)
   if !isNaN(date)
     if date < Date.now()
-      throw new Error "\"#{pattern}\" はすでに過去です"
+      throw new Error "\"#{pattern}\" はすでに過去の日時です"
     return createDatetimeSchedule robot, id, pattern, user, room, message
 
 
@@ -115,7 +119,7 @@ updateSchedule = (robot, msg, id, message) ->
     return msg.send "スケジュール #{id} は見つかりません"
   job.message = message
   robot.brain.get(STORE_KEY)[id] = job.serialize()
-  msg.send "#{id}: スケジュールされたメッセージを更新しました"
+  msg.send "スケジュール #{id} のメッセージを更新しました"
 
 
 cancelSchedule = (robot, msg, id) ->
@@ -125,7 +129,7 @@ cancelSchedule = (robot, msg, id) ->
   job.cancel()
   delete JOBS[id]
   delete robot.brain.get(STORE_KEY)[id]
-  msg.send "#{id}: スケジュールは取り消されました"
+  msg.send "スケジュール #{id} は取り消されました"
 
 
 syncSchedules = (robot) ->
