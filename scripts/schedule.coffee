@@ -87,13 +87,11 @@ module.exports = (robot) ->
 
 
   robot.respond /schedule list/i, (msg) ->
-    rooms = [room_name, msg.message.user.reply_to]
-
     # split jobs into date and cron pattern jobs
     dateJobs = {}
     cronJobs = {}
     for id, job of JOBS
-      if job.user.room in rooms
+      if !isOtherRoom(job.user.room, robot, msg)
         if job.pattern instanceof Date
           dateJobs[id] = job
         else
