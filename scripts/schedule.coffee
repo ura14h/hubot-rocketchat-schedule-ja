@@ -6,12 +6,12 @@
 #   "cron-parser"   : "~1.0.1"
 #
 # Commands:
-#   hubot schedule `<cron pattern>` <message> - Schedule a message that runs recurrently
-#   hubot schedule `<datetime pattern>` <message> - Schedule a message that runs on a specific date and time
-#   hubot schedule cancel <id> - Cancel the schedule
-#   hubot schedule update <id> <message> - Update scheduled message
-#   hubot schedule list - List all scheduled messages for current room
-#   hubot schedule statistics - Show statistics about scheduled messages
+#   hubot schedule `<cron pattern>` <message> - Schedule a message that runs recurrently.
+#   hubot schedule `<datetime pattern>` <message> - Schedule a message that runs on a specific date and time.
+#   hubot schedule cancel <id> - Cancel the schedule specified by <id>.
+#   hubot schedule update <id> <message> - Update the message of schedule  specified by <id>.
+#   hubot schedule list - List all schedules for the current room.
+#   hubot schedule statistics - Show statistics about scheduled messages.
 #
 # Author:
 #   matsukaz <matsukaz@gmail.com>
