@@ -42,10 +42,11 @@ module.exports = (robot) ->
 
   robot.respond /schedule list/i, (msg) ->
     # split jobs into date and cron pattern jobs
+    room = getRoom(robot, msg)
     dateJobs = {}
     cronJobs = {}
     for id, job of JOBS
-      if !isOtherRoom(job.room, robot, msg)
+      if job.room == room
         if job.pattern instanceof Date
           dateJobs[id] = job
         else
@@ -98,8 +99,8 @@ schedule = (robot, msg, pattern, message) ->
     return msg.send 'スケジュールされたメッセージが多すぎます'
 
   id = Math.floor(Math.random() * JOB_MAX_COUNT) while !id? || JOBS[id]
-  user = msg.message.user
-  room = user.room
+  user = getUser(robot, msg)
+  room = getRoom(robot, msg)
   try
     job = createSchedule robot, id, pattern, user, room, message
     if job
@@ -140,8 +141,12 @@ startSchedule = (robot, id, pattern, user, room, message, cb) ->
 
 updateSchedule = (robot, msg, id, message) ->
   job = JOBS[id]
-  if !job || isOtherRoom(job.room, robot, msg)
-    return msg.send "スケジュール #{id} は見つかりません"
+  if !job
+    return msg.send "スケジュール #{id} が見つかりません"
+  room = getRoom(robot, msg)
+  if job.room != room
+    return msg.send "スケジュール #{id} が見つかりません"
+
   job.message = message
   robot.brain.get(STORE_KEY)[id] = job.serialize()
   msg.send "スケジュール #{id} のメッセージを更新しました"
@@ -149,8 +154,12 @@ updateSchedule = (robot, msg, id, message) ->
 
 cancelSchedule = (robot, msg, id) ->
   job = JOBS[id]
-  if !job || isOtherRoom(job.room, robot, msg)
-    return msg.send "スケジュール #{id} は見つかりません"
+  if !job
+    return msg.send "スケジュール #{id} が見つかりません"
+  room = getRoom(robot, msg)
+  if job.room != room
+    return msg.send "スケジュール #{id} が見つかりません"
+
   job.cancel()
   delete JOBS[id]
   delete robot.brain.get(STORE_KEY)[id]
@@ -193,10 +202,14 @@ isCronPattern = (pattern) ->
   return !Object.keys(errors).length
 
 
-isOtherRoom = (room, robot, msg) ->
-  if room not in [msg.message.user.room, msg.message.user.reply_to]
-    return true
-  return false
+getUser = (robot, msg) ->
+  user = { id: msg.message.user.id, name: msg.message.user.name }
+  return user
+
+
+getRoom = (robot, msg) ->
+  room = { id: msg.message.user.roomID, type: msg.message.user.roomType, name: msg.message.user.room }
+  return room
 
 
 toTwoDigits = (num) ->
@@ -235,9 +248,9 @@ class Job
     [@pattern, @user, @room, @message]
 
 executeJob =  (robot, id, user, room, message, cb) ->
-  robot.adapter.driver.asyncCall 'getRoomIdByNameOrId', room
+  robot.adapter.driver.asyncCall 'getRoomNameById', room.id
   .then (result) ->
-    envelope = room: room
+    envelope = room: room.id
     robot.send envelope, message
     cb?()
   .catch (error) ->
