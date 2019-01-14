@@ -108,10 +108,10 @@ module.exports = (robot) ->
       > スケジュールの合計: #{messageAllCount} 件
       > - クロンパターン指定 #{messageCronCount} 件
       > - 日時パターン指定 #{messageDatetimeCount} 件
-      > ルームの合計: #{roomCount} 件
-      > - チャンネル向け #{publicRoomCount} 件
-      > - プライベートグループ向け #{privateGroupCount} 件
-      > - ダイレクトメッセージ向け #{directMessageCount} 件
+      > スケジュールを使用しているルームの合計: #{roomCount} 室
+      > - パブリックチャンネル #{publicRoomCount} 室
+      > - プライベートグループ #{privateGroupCount} 室
+      > - ダイレクトメッセージ #{directMessageCount} 室
     """
 
   robot.respond /schedule example$/i, (msg) ->
